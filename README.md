@@ -3,7 +3,7 @@
 
 Roo Labs is a software engineering team participating in the **LA-Tech.org Rising Technical Internship Program**.
 
-Our current project, **Roo**, is a vehicle health and maintenance platform designed to make car ownership easier to understand, especially for first-time and less-experienced vehicle owners.
+Our current project, **Roo**, is a vehicle health and maintenance platform designed to make car ownership easier to understand, especially for first time and less experienced vehicle owners.
 
 Our goal is to help drivers better understand their vehicles, recognize potential problems, stay on top of maintenance, and find useful resources when something goes wrong.
 
@@ -11,7 +11,7 @@ Our goal is to help drivers better understand their vehicles, recognize potentia
 
 Car maintenance can be confusing, especially for drivers who may not understand dashboard warnings, diagnostic codes, or when a vehicle needs professional attention.
 
-Roo aims to simplify this experience by combining vehicle maintenance tracking, AI-assisted guidance, and location-based automotive resources into one accessible platform.
+Roo aims to simplify this experience by combining vehicle maintenance tracking, AI-assisted guidance, and location based automotive resources into one accessible platform.
 
 We want to help users make more informed decisions about their vehicles without needing extensive automotive knowledge.
 
@@ -22,7 +22,7 @@ We want to help users make more informed decisions about their vehicles without 
 - Personalized maintenance reminders
 - Dashboard warning and diagnostic code explanations
 - Vehicle health insights and maintenance recommendations
-- Beginner-friendly automotive education
+- Beginner friendly automotive education
 
 ### AI Vehicle Assistant
 An AI-powered assistant that helps users better understand potential vehicle problems.
@@ -38,7 +38,7 @@ Potential capabilities include:
 The assistant is intended to provide informational guidance, not replace professional vehicle inspections or guarantee that a vehicle is safe to drive.
 
 ### Nearby Mechanic Finder
-A location-based feature to help drivers find automotive assistance when needed.
+A location based feature to help drivers find automotive assistance when needed.
 
 Potential capabilities include:
 - Finding nearby mechanics and repair shops
@@ -53,7 +53,7 @@ Location access would be optional and require user permission.
 A feature to help drivers understand possible options after experiencing vehicle damage caused by road conditions, such as potholes.
 
 Potential capabilities include:
-- Explaining how to document pothole-related vehicle damage
+- Explaining how to document pothole related vehicle damage
 - Providing information about local government damage claims
 - Helping users locate official claim submission resources
 - Offering guidance on gathering photos, repair estimates, and incident details
@@ -136,9 +136,9 @@ Our development workflow:
 
 Roo is designed to be more than a maintenance reminder application.
 
-Our long-term vision is to create an accessible automotive assistant that helps drivers understand their vehicles, respond to unexpected problems, and find useful resources when they need them.
+Our long term vision is to create an accessible automotive assistant that helps drivers understand their vehicles, respond to unexpected problems, and find useful resources when they need them.
 
-By combining software engineering, AI-assisted guidance, vehicle information, and location-based services, Roo Labs aims to make vehicle ownership less stressful and more approachable.
+By combining software engineering, AI-assisted guidance, vehicle information, and location based services, Roo Labs aims to make vehicle ownership less stressful and more approachable.
 
 ---
 
