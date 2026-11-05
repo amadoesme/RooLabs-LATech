@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 
 import { useState } from 'react';
 import {
@@ -6,10 +7,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Alert,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from '../../.expo/types/router';
 
 // Colors the user can choose for their car
 const carColors = [
@@ -24,17 +25,17 @@ const carColors = [
 export default function RooHomeScreen() {
   // Keeps track of the selected car color
   const [selectedColor, setSelectedColor] = useState(carColors[0]);
+  const router = useRouter();
 
-  // Temporary actions until the other pages are ready
   const handleButtonPress = (page: string) => {
-    const message = `${page} page coming soon!`;
-
-    if (Platform.OS === 'web') {
-      window.alert(message);
-    } else {
-      Alert.alert('Roo', message);
-    }
+  if (page === 'Emergency') {
+    router.push('/chatbot');
+  } else if (page === 'Maintenance') {
+    router.push('/maintenance');
+  }
   };
+
+  
 
   return (
     <SafeAreaView style={styles.container}>
