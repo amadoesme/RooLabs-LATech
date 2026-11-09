@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from datetime import datetime
 
 app = FastAPI()
 
@@ -14,6 +15,10 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     message: str
+class MaintenanceRecord(BaseModel):
+    issue: str
+    status: str
+    recommendation: str
 
 @app.get("/ping")
 def ping():
@@ -40,3 +45,22 @@ def chat(request: ChatRequest):
             "status": "green",
             "response": "You may continue driving, but monitor the issue."
         }
+maintenance_history = []
+
+@app.post("/maintenance")
+def save_maintenance(record: MaintenanceRecord):
+    saved_record = {
+        "issue": record.issue,
+        "status": record.status,
+        "recommendation": record.recommendation,
+        "date": datetime.now().isoformat()
+    }
+
+    maintenance_history.append(saved_record)
+
+    return saved_record
+
+
+@app.get("/maintenance")
+def get_maintenance():
+    return maintenance_history
