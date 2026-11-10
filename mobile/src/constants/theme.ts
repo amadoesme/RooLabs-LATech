@@ -8,23 +8,39 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
+  
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
-} as const;
+    //main color themes
+  background: '#FDF9F0',
+  text: '#111111',
+  textMuted: '#6B6B6B',
+  border: '#111111',
+  accent: '#8EC5FF',
+  backgroundElement: '#DCEBFA',  // light blue buttons (911, menu, back)
+  backgroundSelected: '#BFDAF5', // pressed/selected blue
+  textSecondary: '#5E6470',  
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+//card colors 
+  cardYellow: '#FDF1C4',  // "See"
+  cardPurple: '#EEE7FB',  // "Smell"
+  cardGreen:  '#DDF4E4',  // "Feel"
+  cardBlue:   '#DCEBFA',  // "Hear"
+
+    // status colors (for the Home and Maintenance screens later)
+  danger:  '#FFC9C9',  // Emergency button, "Needs attention"
+  warning: '#FFF0B9',  // "1 thing needs attention" banner
+  continue: '#CFEFD9',  // Maintenance button, "Good" pills
+
+  // menu icon tiles
+  tilePurple: '#DCD3F2',
+  tileBlue:   '#C9DDF0',
+  tileGreen:  '#BFE3CC',
+
+  }
+};
+
+
+export type ThemeColor = keyof typeof Colors.light;
 
 export const Fonts = Platform.select({
   ios: {
