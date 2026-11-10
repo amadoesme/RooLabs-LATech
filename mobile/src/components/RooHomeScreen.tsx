@@ -77,7 +77,7 @@ export default function RooHomeScreen() {
           <Text style={styles.featureIcon}>❗</Text>
 
           <View style={styles.featureText}>
-            <Text style={styles.featureTitle}>Emergency</Text>
+            <Text style={styles.featureTitle}>Chat with Roo</Text>
             <Text style={styles.featureSubtitle}>
               Something's wrong right now
             </Text>
