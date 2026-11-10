@@ -92,16 +92,52 @@ export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
 
-  const send = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
+  const send = async (text: string) => {
+  const trimmed = text.trim();
+
+  if (!trimmed) return;
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      id: String(Date.now()),
+      from: "user",
+      text: trimmed,
+      time: "now",
+    },
+  ]);
+
+  setDraft("");
+
+  try {
+    const response = await fetch(
+      "https://roolabs-latech.onrender.com/chat",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: trimmed,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
     setMessages((prev) => [
       ...prev,
-      { id: String(Date.now()), from: "user", text: trimmed, time: "now" },
+      {
+        id: String(Date.now() + 1),
+        from: "bot",
+        text: data.response,
+        time: "now",
+      },
     ]);
-    setDraft("");
-    // TODO: API get request
-  };
+  } catch (error) {
+    console.error("Backend connection error:", error);
+  }
+};
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.background }]}>
