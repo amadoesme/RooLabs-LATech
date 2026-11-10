@@ -1,0 +1,20 @@
+# Node dependencies
+node_modules/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Python virtual environments
+.venv/
+venv/
+
+# Expo generated files
+.expo/
+
+# Environment files
+.env
+.env.local
+
+# macOS
+.DS_Store
