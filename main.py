@@ -22,8 +22,13 @@ def ping():
 @app.post("/chat")
 def chat(request: ChatRequest):
     message = request.message.lower()
+     if "hello" in message or "i need help" in message:
+        return {
+            "status": "green",
+            "response": "Hello! I’m here to help. Tell me what is happening with your car."
+        }
 
-    if "brake" in message or "smoke" in message:
+    elif "brake" in message or "smoke" in message:
         return {
             "status": "red",
             "response": "Pull over immediately and call for assistance or a tow."
