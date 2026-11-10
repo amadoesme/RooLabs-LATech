@@ -41,23 +41,6 @@ export default function RooHomeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
 
-        {/* Top buttons */}
-        <View style={styles.header}>
-          <Pressable
-            style={styles.headerButton}
-            onPress={() => handleButtonPress('Emergency contact')}
-          >
-            <Text style={styles.headerText}>911</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.headerButton}
-            onPress={() => handleButtonPress('Menu')}
-          >
-            <Text style={styles.headerText}>☰</Text>
-          </Pressable>
-        </View>
-
         {/* Car display */}
         <View style={styles.carSection}>
           <View style={styles.carCircle}>
