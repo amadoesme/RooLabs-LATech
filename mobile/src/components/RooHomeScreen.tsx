@@ -28,7 +28,7 @@ export default function RooHomeScreen() {
   const router = useRouter();
 
   const handleButtonPress = (page: string) => {
-  if (page === 'Emergency') {
+  if (page === 'Chat with Roo') {
     router.push('/chatbot');
   } else if (page === 'Maintenance') {
     router.push('/maintenance');
@@ -72,7 +72,7 @@ export default function RooHomeScreen() {
         {/* Emergency button */}
         <Pressable
           style={[styles.featureCard, styles.emergencyCard]}
-          onPress={() => handleButtonPress('Emergency')}
+          onPress={() => handleButtonPress('Chat with Roo')}
         >
           <Text style={styles.featureIcon}>❗</Text>
 
