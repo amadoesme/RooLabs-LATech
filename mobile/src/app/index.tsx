@@ -5,6 +5,3 @@ import RooHomeScreen from '@/components/RooHomeScreen';
 export default function HomeScreen() {
   return <RooHomeScreen />;
 }
-
-
-
