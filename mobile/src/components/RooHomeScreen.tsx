@@ -88,7 +88,7 @@ export default function RooHomeScreen() {
         {/* Emergency button */}
         <Pressable
           style={[styles.featureCard, styles.emergencyCard]}
-          onPress={() => handleButtonPress('Emergency')}
+          onPress={() => handleButtonPress('Chat with Roo')}
         >
           <Text style={styles.featureIcon}>❗</Text>
 
