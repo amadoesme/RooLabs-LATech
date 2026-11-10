@@ -109,14 +109,7 @@ export default function ChatBot() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <IconButton label="‹" onPress={() => router.back()} />
-          <View style={styles.headerRight}>
-            <IconButton label="911" onPress={() => {}} />
-            <IconButton label="≡" onPress={() => {}} />
-          </View>
-        </View>
+  
 
         <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 16 }}>
           <Text style={[styles.title, { color: theme.text }]}>What's going on?</Text>
