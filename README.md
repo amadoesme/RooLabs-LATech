@@ -1,7 +1,7 @@
 
 <div align="center">
 
-<img src="./assets/RooLabs_Logo.jpeg" alt="Roo Labs Logo" width="280">
+<img src="./RooLabs_Logo.jpeg" alt="Roo Labs Logo" width="280">
 
 <h1>Roo Labs</h1>
 
