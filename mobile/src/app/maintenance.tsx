@@ -1,7 +1,7 @@
-// app/maintenance_route.tsx
-import MaintenanceScreen from '@/components/MaintenanceScreen';
 
-// shows our maintenance page
+import RooMaintenanceScreen from '@/components/RooMaintenanceScreen';
+
+// Shows the actual Roo Labs maintenance dashboard
 export default function Maintenance() {
-  return <MaintenanceScreen />;
+  return <RooMaintenanceScreen />;
 }
