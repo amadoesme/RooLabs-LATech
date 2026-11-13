@@ -1,7 +1,17 @@
 
-# Roo Labs
+<div align="center">
+  <img src="assets/RooLabs_Logo.jpeg" alt="Roo Labs Logo" width="280" />
 
-**Your Personal Vehicle Maintenance Assistant**
+  # Roo Labs
+
+  **Your Personal Vehicle Maintenance Assistant**
+
+  LA-Tech.org Rising Technical Internship Program
+
+  *Waymo-Sponsored Project*
+</div>
+
+---
 
 Roo Labs is a software engineering team participating in the **LA-Tech.org Rising Technical Internship Program**, working on a Waymo-sponsored project.
 
