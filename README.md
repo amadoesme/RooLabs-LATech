@@ -1,21 +1,23 @@
 
 <div align="center">
-  <img src="assets/RooLabs_Logo.jpeg" alt="Roo Labs Logo" width="280" />
 
-  # Roo Labs
+<img src="./assets/RooLabs_Logo.jpeg" alt="Roo Labs Logo" width="280">
 
-  **Your Personal Vehicle Maintenance Assistant**
+<h1>Roo Labs</h1>
 
-  LA-Tech.org Rising Technical Internship Program
+<p><strong>Your Personal Vehicle Maintenance Assistant</strong></p>
 
-  *Waymo-Sponsored Project*
+<p>LA-Tech.org Rising Technical Internship Program</p>
+
+<p><em>Waymo-Sponsored Project</em></p>
+
 </div>
 
 ---
 
 Roo Labs is a software engineering team participating in the **LA-Tech.org Rising Technical Internship Program**, working on a Waymo-sponsored project.
 
-Our application, **Roo**, is an AI-assisted vehicle maintenance platform designed to make car ownership easier to understand, especially for first time and less experienced drivers.
+Our application, **Roo**, is an AI-assisted vehicle maintenance platform designed to make car ownership easier to understand, especially for first-time and less experienced drivers.
 
 Our goal is to help users better understand their vehicles, recognize potential problems, stay informed about maintenance, and make more confident decisions when vehicle issues arise.
 
@@ -33,12 +35,12 @@ Roo combines an AI-powered vehicle assistant with a personalized maintenance das
 
 ### AI Vehicle Assistant
 
-Roo allows users to describe vehicle related problems and receive informational guidance about possible causes and recommended next steps.
+Roo allows users to describe vehicle-related problems and receive informational guidance about possible causes and recommended next steps.
 
 The chatbot is designed to:
 
 - Help users describe vehicle symptoms.
-- Explain possible causes in beginner friendly language.
+- Explain possible causes in beginner-friendly language.
 - Provide general vehicle maintenance guidance.
 - Identify potentially serious vehicle concerns.
 - Encourage professional mechanical assistance when necessary.
@@ -52,7 +54,7 @@ Our maintenance dashboard provides a centralized interface for reviewing importa
 Current prototype features include:
 
 - Engine, oil, tires, fluids/cooling, brakes, and battery categories.
-- Color coded maintenance status indicators.
+- Color-coded maintenance status indicators.
 - Expandable maintenance information.
 - Vehicle maintenance summaries.
 - Interactive demo controls for simulating urgent issues and resetting maintenance statuses.
@@ -69,7 +71,7 @@ Our interface includes:
 - Vehicle color customization.
 - Easy navigation between major features.
 - Clearly labeled maintenance and chatbot options.
-- A beginner friendly layout with color coded elements.
+- A beginner-friendly layout with color-coded elements.
 
 ## Technology & Development
 
@@ -109,7 +111,7 @@ Potential capabilities include:
 - Road damage and claims assistance resources.
 - Improvements to AI response reliability and safety.
 
-These features are part of our long term development vision and are not necessarily available in the current prototype.
+These features are part of our long-term development vision and are not necessarily available in the current prototype.
 
 ## Meet the Team
 
@@ -164,6 +166,10 @@ By combining AI-assisted guidance, personalized vehicle information, and an appr
 
 ---
 
+<div align="center">
+
 Developed by **Roo Labs** through the **LA-Tech.org Rising Technical Internship Program**.
 
 *Waymo-sponsored cohort project.*
+
+</div>
