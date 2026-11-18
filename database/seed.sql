@@ -136,3 +136,21 @@ WHERE NOT EXISTS (
       AND bot_response = 'Pull over immediately and call for assistance or a tow.'
 );
 
+
+-- Fictional coolant maintenance history for 2015 Toyota Camry SE
+INSERT INTO maintenance_history
+    (vehicle_id, service_type, service_date, mileage, cost, notes)
+SELECT
+    1,
+    'Coolant Replacement',
+    '2019-06-15',
+    65000,
+    120.00,
+    'Fictional demo coolant service'
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM maintenance_history
+    WHERE vehicle_id = 1
+      AND service_type = 'Coolant Replacement'
+      AND service_date = '2019-06-15'
+);
