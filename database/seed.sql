@@ -106,3 +106,51 @@ INSERT OR IGNORE INTO vehicle_code_examples (vehicle_id,code,scenario_note) VALU
     (1, 'P0011', 'Example of a camshaft timing performance code'),
     (1, 'P0012', 'Example of a camshaft timing performance code'),
     (1, 'P0128', 'Example of a coolant-temperature/thermostat code');
+
+
+-- Sample maintenance history for the 2015 Toyota Camry SE
+INSERT INTO maintenance_history
+    (vehicle_id, service_type, service_date, mileage, cost, notes)
+SELECT
+    1, 'Oil Change', '2026-11-17', 125000, 65.00,
+    'Synthetic oil replacement'
+WHERE NOT EXISTS (
+    SELECT 1 FROM maintenance_history
+    WHERE vehicle_id = 1
+      AND service_type = 'Oil Change'
+      AND service_date = '2026-11-17'
+);
+
+-- Sample chatbot conversation for the Toyota Camry
+INSERT INTO chatbot_history
+    (vehicle_id, user_message, bot_response, status)
+SELECT
+    1,
+    'My brakes are not working',
+    'Pull over immediately and call for assistance or a tow.',
+    'red'
+WHERE NOT EXISTS (
+    SELECT 1 FROM chatbot_history
+    WHERE vehicle_id = 1
+      AND user_message = 'My brakes are not working'
+      AND bot_response = 'Pull over immediately and call for assistance or a tow.'
+);
+
+
+-- Fictional coolant maintenance history for 2015 Toyota Camry SE
+INSERT INTO maintenance_history
+    (vehicle_id, service_type, service_date, mileage, cost, notes)
+SELECT
+    1,
+    'Coolant Replacement',
+    '2019-06-15',
+    65000,
+    120.00,
+    'Fictional demo coolant service'
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM maintenance_history
+    WHERE vehicle_id = 1
+      AND service_type = 'Coolant Replacement'
+      AND service_date = '2019-06-15'
+);

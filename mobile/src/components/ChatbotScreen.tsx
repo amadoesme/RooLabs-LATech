@@ -200,7 +200,7 @@ export default function ChatBot() {
 
     try {
       const response = await fetch(
-        "https://roolabs-latech.onrender.com/chat",
+        "http://127.0.0.1:8000/chat",
         {
           method: "POST",
           headers: {
@@ -208,6 +208,7 @@ export default function ChatBot() {
           },
           body: JSON.stringify({
             message: trimmed,
+            vehicle_id: 1,
           }),
         }
       );

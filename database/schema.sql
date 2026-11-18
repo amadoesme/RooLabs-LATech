@@ -66,3 +66,40 @@ CREATE TABLE IF NOT EXISTS vehicle_code_examples (
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
     FOREIGN KEY (code) REFERENCES diagnostic_codes(code) ON DELETE CASCADE
 );
+
+-- Stores maintenance records for each vehicle
+CREATE TABLE IF NOT EXISTS maintenance_history (
+    maintenance_id INTEGER PRIMARY KEY,
+    vehicle_id INTEGER NOT NULL,
+    service_type TEXT NOT NULL,
+    service_date TEXT NOT NULL,
+    mileage INTEGER CHECK (mileage IS NULL OR mileage >= 0),
+    cost REAL CHECK (cost IS NULL OR cost >= 0),
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+-- Stores chatbot messages and responses
+CREATE TABLE IF NOT EXISTS chatbot_history (
+    chat_id INTEGER PRIMARY KEY,
+    vehicle_id INTEGER NOT NULL,
+    user_message TEXT NOT NULL,
+    bot_response TEXT NOT NULL,
+    status TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+-- Indexes for faster history retrieval
+CREATE INDEX IF NOT EXISTS idx_maintenance_vehicle_id
+    ON maintenance_history(vehicle_id);
+
+CREATE INDEX IF NOT EXISTS idx_chatbot_vehicle_id
+    ON chatbot_history(vehicle_id);

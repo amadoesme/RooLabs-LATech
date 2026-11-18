@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -93,6 +93,38 @@ export default function RooMaintenanceScreen() {
   // Shows a message after clicking a demo button
   const [demoMessage, setDemoMessage] = useState('');
 
+  // Only the cooling card is loaded from SQLite through FastAPI.
+  // Other cards retain the original frontend demo data.
+  const loadCoolingStatus = async () => {
+    try {
+      const response = await fetch(
+        'http://127.0.0.1:8000/vehicles/1/maintenance-status'
+      );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data: { items: MaintenanceItem[] } = await response.json();
+      const cooling = data.items.find((item) => item.id === 'cooling');
+      if (!cooling) throw new Error('Cooling status missing from API');
+
+      setItems((current) =>
+        current.map((item) =>
+          item.id === 'cooling'
+            ? { ...item, status: cooling.status, reason: cooling.reason,
+                source: cooling.source, action: cooling.action }
+            : item
+        )
+      );
+      return true;
+    } catch (error) {
+      console.error('Could not load cooling status:', error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    void loadCoolingStatus();
+  }, []);
+
   // Counts the systems that need attention
   const attentionCount = items.filter(
     (item) =>
@@ -143,14 +175,17 @@ export default function RooMaintenanceScreen() {
   };
 
   // Resets the sample data
-  const resetDemo = () => {
+  const resetDemo = async () => {
     console.log('Reset Demo clicked');
 
     setItems(initialItems);
     setExpandedId(null);
 
-    // Confirms the original information was restored
-    setDemoMessage('Demo reset! Original maintenance statuses restored.');
+    // Restore original demo cards, then refresh cooling from SQLite
+    const loaded = await loadCoolingStatus();
+    setDemoMessage(loaded
+      ? 'Demo reset! Coolant status refreshed from maintenance history.'
+      : 'Demo reset, but coolant history could not be loaded. Check FastAPI.');
   };
 
   return (
