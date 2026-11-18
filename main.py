@@ -1,6 +1,7 @@
 
 import sqlite3
 from pathlib import Path
+from datetime import date, datetime
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -32,39 +33,35 @@ def get_db():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     DB_DIR.mkdir(parents=True, exist_ok=True)
 
+    schema_path = DB_DIR / "schema.sql"
+    seed_path = DB_DIR / "seed.sql"
+
+    if not schema_path.exists():
+        raise RuntimeError("database/schema.sql is missing")
+
     with get_db() as connection:
-
-        schema_path = DB_DIR / "schema.sql"
-        seed_path = DB_DIR / "seed.sql"
-
-        if not schema_path.exists():
-            raise RuntimeError("database/schema.sql is missing")
-
         connection.executescript(
             schema_path.read_text(encoding="utf-8")
         )
 
-        # Handle older local databases without the trim column
+        # Support older databases missing the trim column
         columns = connection.execute(
             "PRAGMA table_info(vehicles)"
         ).fetchall()
 
-        column_names = [column["name"] for column in columns]
-
-        if "trim" not in column_names:
+        if "trim" not in [col["name"] for col in columns]:
             connection.execute(
                 "ALTER TABLE vehicles ADD COLUMN trim TEXT"
             )
 
-        # Seed only when the database is newly initialized
-        existing_users = connection.execute(
+        # Seed a fresh database
+        count = connection.execute(
             "SELECT COUNT(*) FROM users"
         ).fetchone()[0]
 
-        if existing_users == 0:
+        if count == 0:
             if not seed_path.exists():
                 raise RuntimeError("database/seed.sql is missing")
 
@@ -72,7 +69,6 @@ async def lifespan(app: FastAPI):
                 seed_path.read_text(encoding="utf-8")
             )
 
-        # Ensure the default demo vehicle exists
         vehicle = connection.execute(
             "SELECT vehicle_id FROM vehicles WHERE vehicle_id = ?",
             (DEFAULT_VEHICLE_ID,)
@@ -80,8 +76,7 @@ async def lifespan(app: FastAPI):
 
         if vehicle is None:
             raise RuntimeError(
-                "Default demo vehicle is missing. "
-                "Check database/seed.sql."
+                "Default Camry is missing from the database."
             )
 
     yield
@@ -116,7 +111,7 @@ class ChatRequest(BaseModel):
 class MaintenanceRequest(BaseModel):
     vehicle_id: int = Field(default=DEFAULT_VEHICLE_ID, ge=1)
     service_type: str = Field(min_length=1)
-    service_date: str
+    service_date: date
     mileage: int | None = Field(default=None, ge=0)
     cost: float | None = Field(default=None, ge=0)
     notes: str | None = None
@@ -127,7 +122,6 @@ class MaintenanceRequest(BaseModel):
 # ==========================================
 
 def get_vehicle(connection, vehicle_id):
-
     vehicle = connection.execute(
         """
         SELECT vehicle_id, make, model, year, trim
@@ -138,35 +132,219 @@ def get_vehicle(connection, vehicle_id):
     ).fetchone()
 
     if vehicle is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Vehicle not found"
-        )
+        raise HTTPException(404, "Vehicle not found")
 
     return vehicle
 
 
-def format_vehicle_name(vehicle):
-
+def vehicle_name(vehicle):
     return (
-        f"{vehicle['year']} "
-        f"{vehicle['make']} "
-        f"{vehicle['model']} "
-        f"{vehicle['trim'] or ''}"
+        f"{vehicle['year']} {vehicle['make']} "
+        f"{vehicle['model']} {vehicle['trim'] or ''}"
     ).strip()
 
 
-def format_response(title, vehicle_name, safety,
-                    maintenance, causes, recommendation):
+def latest_service(connection, vehicle_id, keywords):
+    rows = connection.execute(
+        """
+        SELECT *
+        FROM maintenance_history
+        WHERE vehicle_id = ?
+        ORDER BY service_date DESC, maintenance_id DESC
+        """,
+        (vehicle_id,)
+    ).fetchall()
 
+    for row in rows:
+        service = row["service_type"].lower()
+        if any(word in service for word in keywords):
+            return row
+
+    return None
+
+
+def years_since(service_date):
+    recorded = date.fromisoformat(service_date)
+    today = date.today()
     return (
-        f"{title}\n\n"
-        f"Vehicle: {vehicle_name}\n\n"
-        f"Safety: {safety}\n\n"
-        f"Maintenance History: {maintenance}\n\n"
-        f"Possible Causes: {causes}\n\n"
-        f"Recommendation: {recommendation}"
+        today.year - recorded.year
+        - ((today.month, today.day) <
+           (recorded.month, recorded.day))
     )
+
+
+def format_service_date(value):
+    return date.fromisoformat(value).strftime("%B %d, %Y")
+
+
+def make_item(item_id, name, status, reason, source, action):
+    return {
+        "id": item_id,
+        "name": name,
+        "status": status,
+        "reason": reason,
+        "source": source,
+        "action": action
+    }
+
+
+# ==========================================
+# MAINTENANCE STATUS LOGIC
+# ==========================================
+
+def calculate_maintenance_status(connection, vehicle_id):
+    get_vehicle(connection, vehicle_id)
+
+    items = []
+
+    # ENGINE: Check stored diagnostic history
+    engine_issue = connection.execute(
+        """
+        SELECT d.code, d.description
+        FROM diagnostic_history h
+        JOIN diagnostic_codes d ON h.code = d.code
+        WHERE h.vehicle_id = ?
+        ORDER BY h.scanned_at DESC, h.history_id DESC
+        LIMIT 1
+        """,
+        (vehicle_id,)
+    ).fetchone()
+
+    if engine_issue:
+        items.append(make_item(
+            "engine",
+            "Engine",
+            "Needs Attention",
+            f"Recorded diagnostic code: {engine_issue['code']}",
+            "OBD-II diagnostic history",
+            "Have the recorded issue inspected. "
+            "Historical codes do not confirm a current fault."
+        ))
+    else:
+        items.append(make_item(
+            "engine",
+            "Engine",
+            "Not Checked",
+            "No diagnostic history available",
+            "No information available",
+            "Run an OBD-II scan or record an inspection."
+        ))
+
+    # OIL: Demo rule - flag oil changes older than one year
+    oil = latest_service(
+        connection, vehicle_id, ["oil change", "engine oil"]
+    )
+
+    if oil:
+        old = years_since(oil["service_date"]) >= 1
+        items.append(make_item(
+            "oil",
+            "Oil",
+            "Needs Attention" if old else "Good",
+            f"Last oil change: {format_service_date(oil['service_date'])}",
+            "Maintenance history",
+            "Review oil service needs using mileage and "
+            "manufacturer recommendations."
+            if old else "Continue regular oil maintenance."
+        ))
+    else:
+        items.append(make_item(
+            "oil", "Oil", "Not Checked",
+            "No oil change recorded",
+            "No information available",
+            "Add an oil change record."
+        ))
+
+    # TIRES
+    tires = latest_service(
+        connection, vehicle_id, ["tire", "tyre"]
+    )
+
+    if tires:
+        items.append(make_item(
+            "tires", "Tires", "Not Checked",
+            f"Last tire service: {format_service_date(tires['service_date'])}",
+            "Maintenance history",
+            "Inspect tire pressure, tread, and condition. "
+            "A service record alone cannot confirm tire safety."
+        ))
+    else:
+        items.append(make_item(
+            "tires", "Tires", "Not Checked",
+            "No tire inspection recorded",
+            "No information available",
+            "Add a tire inspection record."
+        ))
+
+    # COOLANT: Demo rule - review service older than five years
+    coolant = latest_service(
+        connection, vehicle_id, ["coolant", "antifreeze"]
+    )
+
+    if coolant:
+        old = years_since(coolant["service_date"]) >= 5
+        items.append(make_item(
+            "cooling",
+            "Fluids / Cooling",
+            "Needs Attention" if old else "Not Checked",
+            f"Last coolant replacement: "
+            f"{format_service_date(coolant['service_date'])}",
+            "Maintenance history",
+            "Review coolant replacement history and inspect "
+            "the cooling system. The five-year threshold "
+            "is a demo rule, not a universal service interval."
+            if old else
+            "Check coolant level and condition when the engine is cold."
+        ))
+    else:
+        items.append(make_item(
+            "cooling", "Fluids / Cooling", "Not Checked",
+            "No coolant service recorded",
+            "No information available",
+            "Check the cooling system and add a service record."
+        ))
+
+    # BRAKES
+    brakes = latest_service(
+        connection, vehicle_id, ["brake"]
+    )
+
+    if brakes:
+        items.append(make_item(
+            "brakes", "Brakes", "Not Checked",
+            f"Last brake service: {format_service_date(brakes['service_date'])}",
+            "Maintenance history",
+            "Verify brake condition with a current inspection."
+        ))
+    else:
+        items.append(make_item(
+            "brakes", "Brakes", "Not Checked",
+            "No brake inspection recorded",
+            "No information available",
+            "Add a brake inspection record."
+        ))
+
+    # BATTERY
+    battery = latest_service(
+        connection, vehicle_id, ["battery"]
+    )
+
+    if battery:
+        items.append(make_item(
+            "battery", "Battery", "Not Checked",
+            f"Last battery service: {format_service_date(battery['service_date'])}",
+            "Maintenance history",
+            "Check battery health with a current test."
+        ))
+    else:
+        items.append(make_item(
+            "battery", "Battery", "Not Checked",
+            "No battery check recorded",
+            "No information available",
+            "Add a battery inspection record."
+        ))
+
+    return items
 
 
 # ==========================================
@@ -175,7 +353,6 @@ def format_response(title, vehicle_name, safety,
 
 @app.get("/ping")
 def ping():
-
     return {"message": "pong"}
 
 
@@ -185,178 +362,88 @@ def ping():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-
     message = request.message.lower().strip()
 
     with get_db() as connection:
-
-        vehicle = get_vehicle(
-            connection,
-            request.vehicle_id
-        )
-
-        vehicle_name = format_vehicle_name(vehicle)
-
-        # ----------------------------------
-        # OVERHEATING
-        # ----------------------------------
+        vehicle = get_vehicle(connection, request.vehicle_id)
+        name = vehicle_name(vehicle)
 
         if (
             "overheat" in message
             or "overheating" in message
             or "running hot" in message
         ):
-
-            coolant = connection.execute(
-                """
-                SELECT service_date, mileage
-                FROM maintenance_history
-                WHERE vehicle_id = ?
-                  AND LOWER(service_type) LIKE '%coolant%'
-                ORDER BY service_date DESC, maintenance_id DESC
-                LIMIT 1
-                """,
-                (request.vehicle_id,)
-            ).fetchone()
+            coolant = latest_service(
+                connection,
+                request.vehicle_id,
+                ["coolant", "antifreeze"]
+            )
 
             if coolant:
                 maintenance = (
-                    f"Your last recorded coolant service "
-                    f"was on {coolant['service_date']} "
-                    f"at {coolant['mileage']:,} miles."
-                    if coolant["mileage"] is not None
-                    else (
-                        "Your last recorded coolant service "
-                        f"was on {coolant['service_date']}."
-                    )
+                    "Last recorded coolant replacement: "
+                    f"{format_service_date(coolant['service_date'])}"
                 )
             else:
-                maintenance = (
-                    "No previous coolant service "
-                    "was found in your records."
-                )
+                maintenance = "No coolant service recorded."
 
             status = "red"
-
-            response = format_response(
-                title="OVERHEATING WARNING",
-                vehicle_name=vehicle_name,
-                safety=(
-                    "Pull over safely, turn off the engine, "
-                    "and allow it to cool."
-                ),
-                maintenance=maintenance,
-                causes=(
-                    "Low coolant, coolant leaks, "
-                    "thermostat issues, water pump problems, "
-                    "or other cooling-system faults."
-                ),
-                recommendation=(
-                    "Do not open the radiator cap while hot. "
-                    "Arrange an inspection or tow before driving again."
-                )
+            response = (
+                "OVERHEATING WARNING\n\n"
+                f"Vehicle: {name}\n\n"
+                "Safety: Pull over safely and turn off the engine.\n\n"
+                f"Maintenance History: {maintenance}\n\n"
+                "Possible Causes: Low coolant, leaks, thermostat "
+                "failure, or other cooling-system problems.\n\n"
+                "Recommendation: Do not open the radiator cap "
+                "while hot. Arrange an inspection or tow before "
+                "driving again."
             )
-
-        # ----------------------------------
-        # BRAKES OR SMOKE
-        # ----------------------------------
 
         elif "brake" in message or "smoke" in message:
-
             status = "red"
-
-            response = format_response(
-                title="CRITICAL SAFETY WARNING",
-                vehicle_name=vehicle_name,
-                safety=(
-                    "Pull over safely and stop driving."
-                ),
-                maintenance=(
-                    "Review your vehicle's maintenance records."
-                ),
-                causes=(
-                    "Potential braking-system or mechanical problems."
-                ),
-                recommendation=(
-                    "Contact roadside assistance or a mechanic. "
-                    "Do not continue driving if the vehicle is unsafe."
-                )
+            response = (
+                "CRITICAL SAFETY WARNING\n\n"
+                f"Vehicle: {name}\n\n"
+                "Safety: Stop driving as soon as it is safe.\n\n"
+                "Recommendation: Contact roadside assistance "
+                "or a qualified mechanic."
             )
 
-        # ----------------------------------
-        # CHECK ENGINE OR TIRE
-        # ----------------------------------
-
-        elif (
-            "check engine" in message
-            or "tire" in message
-        ):
-
+        elif "check engine" in message or "tire" in message:
             status = "yellow"
-
-            response = format_response(
-                title="VEHICLE ATTENTION REQUIRED",
-                vehicle_name=vehicle_name,
-                safety=(
-                    "Proceed with caution only if the vehicle "
-                    "is operating normally and is safe to drive."
-                ),
-                maintenance=(
-                    "Check your maintenance history "
-                    "for related services."
-                ),
-                causes=(
-                    "Possible engine, sensor, or tire-related issues."
-                ),
-                recommendation=(
-                    "Have the vehicle inspected. "
-                    "If the check engine light is flashing "
-                    "or a tire is flat or unsafe, stop driving safely."
-                )
+            response = (
+                "VEHICLE ATTENTION REQUIRED\n\n"
+                f"Vehicle: {name}\n\n"
+                "Safety: Check whether the vehicle is safe "
+                "before continuing.\n\n"
+                "Recommendation: Arrange a professional inspection. "
+                "If the check engine light is flashing or a tire "
+                "is unsafe, stop driving safely."
             )
-
-        # ----------------------------------
-        # GREETING
-        # ----------------------------------
 
         elif (
             "hello" in message
             or "i need help" in message
             or message in ("hi", "hey")
         ):
-
             status = "green"
-
             response = (
                 "VEHICLE DIAGNOSTIC ASSISTANT\n\n"
-                f"Vehicle: {vehicle_name}\n\n"
-                "Hello! I'm here to help with your vehicle.\n\n"
-                "Describe the issue you're experiencing, "
+                f"Vehicle: {name}\n\n"
+                "Hello! Describe what's happening with your car, "
                 "and I'll provide general safety guidance."
             )
 
-        # ----------------------------------
-        # UNKNOWN ISSUE
-        # ----------------------------------
-
         else:
-
             status = "unknown"
-
             response = (
                 "ADDITIONAL INFORMATION NEEDED\n\n"
-                f"Vehicle: {vehicle_name}\n\n"
-                "I couldn't determine the severity "
-                "from your description.\n\n"
-                "Please provide more details about "
-                "what is happening with your vehicle.\n\n"
-                "If the vehicle seems unsafe to operate, "
-                "stop driving safely and seek professional assistance."
+                f"Vehicle: {name}\n\n"
+                "Please describe the problem in more detail.\n\n"
+                "If the vehicle appears unsafe, stop driving "
+                "safely and seek professional assistance."
             )
-
-        # ----------------------------------
-        # SAVE CHAT HISTORY
-        # ----------------------------------
 
         cursor = connection.execute(
             """
@@ -364,13 +451,10 @@ def chat(request: ChatRequest):
             (vehicle_id, user_message, bot_response, status)
             VALUES (?, ?, ?, ?)
             """,
-            (
-                request.vehicle_id,
-                request.message,
-                response,
-                status
-            )
+            (request.vehicle_id, request.message, response, status)
         )
+
+        connection.commit()
 
         return {
             "message_id": cursor.lastrowid,
@@ -380,14 +464,12 @@ def chat(request: ChatRequest):
 
 
 # ==========================================
-# GET CHATBOT HISTORY
+# CHAT HISTORY
 # ==========================================
 
 @app.get("/vehicles/{vehicle_id}/chat-history")
 def get_chat_history(vehicle_id: int):
-
     with get_db() as connection:
-
         get_vehicle(connection, vehicle_id)
 
         rows = connection.execute(
@@ -404,14 +486,12 @@ def get_chat_history(vehicle_id: int):
 
 
 # ==========================================
-# GET MAINTENANCE HISTORY
+# MAINTENANCE HISTORY
 # ==========================================
 
 @app.get("/vehicles/{vehicle_id}/maintenance")
 def get_maintenance(vehicle_id: int):
-
     with get_db() as connection:
-
         get_vehicle(connection, vehicle_id)
 
         rows = connection.execute(
@@ -428,14 +508,30 @@ def get_maintenance(vehicle_id: int):
 
 
 # ==========================================
+# MAINTENANCE STATUS
+# ==========================================
+
+@app.get("/vehicles/{vehicle_id}/maintenance-status")
+def get_maintenance_status(vehicle_id: int):
+    with get_db() as connection:
+        vehicle = get_vehicle(connection, vehicle_id)
+
+        return {
+            "vehicle_id": vehicle_id,
+            "vehicle": vehicle_name(vehicle),
+            "items": calculate_maintenance_status(
+                connection, vehicle_id
+            )
+        }
+
+
+# ==========================================
 # ADD MAINTENANCE RECORD
 # ==========================================
 
 @app.post("/maintenance")
 def add_maintenance(request: MaintenanceRequest):
-
     with get_db() as connection:
-
         get_vehicle(connection, request.vehicle_id)
 
         cursor = connection.execute(
@@ -454,12 +550,14 @@ def add_maintenance(request: MaintenanceRequest):
             (
                 request.vehicle_id,
                 request.service_type,
-                request.service_date,
+                request.service_date.isoformat(),
                 request.mileage,
                 request.cost,
                 request.notes
             )
         )
+
+        connection.commit()
 
         return {
             "maintenance_id": cursor.lastrowid,
